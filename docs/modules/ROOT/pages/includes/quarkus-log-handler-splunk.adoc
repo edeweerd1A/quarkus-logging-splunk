@@ -61,6 +61,23 @@ endif::add-copy-button-to-env-var[]
 |`true`
 
 
+a|icon:lock[title=Fixed at build time] [[quarkus-log-handler-splunk_quarkus-log-handler-splunk-devservices-ui-url]]`link:#quarkus-log-handler-splunk_quarkus-log-handler-splunk-devservices-ui-url[quarkus.log.handler.splunk.devservices.ui-url]`
+
+
+[.description]
+--
+The UI URL the splunk dev service.
+
+ifdef::add-copy-button-to-env-var[]
+Environment variable: env_var_with_copy_button:+++QUARKUS_LOG_HANDLER_SPLUNK_DEVSERVICES_UI_URL+++[]
+endif::add-copy-button-to-env-var[]
+ifndef::add-copy-button-to-env-var[]
+Environment variable: `+++QUARKUS_LOG_HANDLER_SPLUNK_DEVSERVICES_UI_URL+++`
+endif::add-copy-button-to-env-var[]
+--|string 
+|
+
+
 a| [[quarkus-log-handler-splunk_quarkus-log-handler-splunk-enabled]]`link:#quarkus-log-handler-splunk_quarkus-log-handler-splunk-enabled[quarkus.log.handler.splunk.enabled]`
 
 

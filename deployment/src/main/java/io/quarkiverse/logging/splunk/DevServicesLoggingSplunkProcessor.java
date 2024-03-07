@@ -2,6 +2,7 @@ package io.quarkiverse.logging.splunk;
 
 import java.time.Duration;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 
@@ -10,6 +11,7 @@ import org.testcontainers.utility.DockerImageName;
 
 import io.quarkiverse.logging.splunk.config.build.DevServicesLoggingSplunkBuildTimeConfig;
 import io.quarkiverse.logging.splunk.config.build.SplunkBuildConfig;
+import io.quarkus.deployment.IsDevelopment;
 import io.quarkus.deployment.IsNormal;
 import io.quarkus.deployment.annotations.BuildStep;
 import io.quarkus.deployment.annotations.BuildSteps;
@@ -21,6 +23,8 @@ import io.quarkus.deployment.console.ConsoleInstalledBuildItem;
 import io.quarkus.deployment.console.StartupLogCompressor;
 import io.quarkus.deployment.dev.devservices.GlobalDevServicesConfig;
 import io.quarkus.deployment.logging.LoggingSetupBuildItem;
+import io.quarkus.devui.spi.page.CardPageBuildItem;
+import io.quarkus.devui.spi.page.Page;
 import io.quarkus.runtime.LaunchMode;
 
 @BuildSteps(onlyIfNot = IsNormal.class, onlyIf = { GlobalDevServicesConfig.Enabled.class })
@@ -32,6 +36,8 @@ public class DevServicesLoggingSplunkProcessor {
     private static final String HANDLER_URL_CONFIG_PROP = "quarkus.log.handler.splunk.url";
 
     private static final String API_URL_CONFIG_PROP = "quarkus.log.handler.splunk.devservices.api-url";
+
+    private static final String UI_URL_CONFIG_PROP = "quarkus.log.handler.splunk.devservices.ui-url";
 
     private static final String SPLUNK_LATEST = "registry-1.docker.io/splunk/splunk:latest";
 
@@ -145,6 +151,7 @@ public class DevServicesLoggingSplunkProcessor {
         final Map<String, String> exposedConfig = new HashMap<>();
         exposedConfig.put(HANDLER_URL_CONFIG_PROP, container.getSplunkHandlerUrl());
         exposedConfig.put(API_URL_CONFIG_PROP, container.getSplunkApiUrl());
+        exposedConfig.put(UI_URL_CONFIG_PROP, container.getSplunkUiUrl());
         exposedConfig.put("quarkus.log.handler.splunk.token", SplunkContainer.HEC_TOKEN);
         exposedConfig.put("quarkus.log.handler.splunk.disable-certificate-validation", "true");
         exposedConfig.put("quarkus.log.handler.splunk.enabled", "true");
@@ -164,5 +171,29 @@ public class DevServicesLoggingSplunkProcessor {
 
     private boolean isEnabled(DevServicesLoggingSplunkBuildTimeConfig config) {
         return config.enabled.orElse(false);
+    }
+
+    /**
+     * Customize the extension card in DevUI with a link to running Splunk containers UI.
+     */
+    @BuildStep(onlyIf = IsDevelopment.class)
+    public CardPageBuildItem pages(List<DevServicesResultBuildItem> devServicesResultBuildItems) {
+        CardPageBuildItem cardPageBuildItem = new CardPageBuildItem();
+
+        String splunkUIUrl = devServicesResultBuildItems.stream()
+                .filter(item -> item.getConfig().get(UI_URL_CONFIG_PROP) != null)
+                .map(item -> item.getConfig().get(UI_URL_CONFIG_PROP))
+                .findFirst()
+                .orElse(null);
+
+        if (splunkUIUrl != null) {
+            cardPageBuildItem.addPage(Page.externalPageBuilder("Splunk UI (user: admin, password: admin123)")
+                    .url(splunkUIUrl)
+                    .isHtmlContent()
+                    .icon("font-awesome-solid:plug-circle-bolt")
+                    .doNotEmbed()); // required because the Splunk UI has an X-Frame-Options HTTP header set to sameorigin
+        }
+
+        return cardPageBuildItem;
     }
 }
